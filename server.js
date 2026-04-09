@@ -53,7 +53,7 @@ app.post('/api/login', (req, res) => {
 
 app.get('/api/data', checkAuth, async (req, res) => {
   try {
-    const { month } = req.query;
+    const { month, from, to } = req.query;
 
     // ── Subs depuis Firebase ──
     const subsSnap = await db.collection('subscribers').get();
@@ -68,8 +68,13 @@ app.get('/api/data', checkAuth, async (req, res) => {
     const rows = sheetRes.data.values || [];
     const spenders = rows.slice(1).filter(r => r[4] && r[4] !== 'inconnu' && r[5]);
 
-    // ── Filtrage par mois ──
-    const filterByMonth = (dateStr) => {
+    // ── Filtrage par date ──
+    const filterByDate = (dateStr) => {
+      if (from && to) {
+        if (!dateStr) return false;
+        const d = dateStr.substring(0, 10);
+        return d >= from && d <= to;
+      }
       if (!month || month === 'all') return true;
       return dateStr && dateStr.startsWith(month);
     };
@@ -82,14 +87,14 @@ app.get('/api/data', checkAuth, async (req, res) => {
     });
 
     subs.forEach(sub => {
-      if (!filterByMonth(sub.joined_at)) return;
+      if (!filterByDate(sub.joined_at)) return;
       const src = normalizeSource(sub.source);
       if (stats[src]) stats[src].subs++;
     });
 
     spenders.forEach(row => {
       const date = row[0] || '';
-      if (!filterByMonth(date)) return;
+      if (!filterByDate(date)) return;
       const src = normalizeSource(row[3]);
       if (!stats[src]) return;
       const montantStr = (row[5] || '').replace(' EUR', '').replace(',', '.');
@@ -144,6 +149,75 @@ app.get('/api/months', checkAuth, async (req, res) => {
     });
     res.json({ months: Array.from(months).sort().reverse() });
   } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── CLASSEMENT SPENDERS ──────────────────────────────────────────────────────
+app.get('/api/spenders', checkAuth, async (req, res) => {
+  try {
+    const { month, from, to } = req.query;
+    const sheets = google.sheets({ version: 'v4', auth: await sheetsAuth.getClient() });
+    const sheetRes = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: 'Feuille 1!A:I'
+    });
+    const rows = sheetRes.data.values || [];
+    const dataRows = rows.slice(1).filter(r => r[4] && r[4] !== 'inconnu' && r[5]);
+
+    const filterByDate = (dateStr) => {
+      if (from && to) {
+        if (!dateStr) return false;
+        const d = dateStr.substring(0, 10);
+        return d >= from && d <= to;
+      }
+      if (!month || month === 'all') return true;
+      return dateStr && dateStr.startsWith(month);
+    };
+
+    // Agréger par email
+    const spenderMap = {};
+    dataRows.forEach(row => {
+      const date = row[0] || '';
+      if (!filterByDate(date)) return;
+      const name = row[1] || '';
+      const username = row[2] || '';
+      const source = normalizeSource(row[3]);
+      const email = row[4] || '';
+      const montantStr = (row[5] || '').replace(' EUR', '').replace(',', '.');
+      const montant = parseFloat(montantStr) || 0;
+
+      if (!spenderMap[email]) {
+        spenderMap[email] = {
+          email,
+          name,
+          username,
+          source,
+          totalSpent: 0,
+          purchases: 0,
+          lastPurchase: date
+        };
+      }
+      spenderMap[email].totalSpent += montant;
+      spenderMap[email].purchases += 1;
+      if (date > spenderMap[email].lastPurchase) {
+        spenderMap[email].lastPurchase = date;
+      }
+    });
+
+    const spenders = Object.values(spenderMap)
+      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .map((s, i) => ({
+        rank: i + 1,
+        ...s,
+        totalSpent: s.totalSpent.toFixed(2)
+      }));
+
+    const totalRevenue = spenders.reduce((acc, s) => acc + parseFloat(s.totalSpent), 0).toFixed(2);
+
+    res.json({ spenders, totalRevenue, totalSpenders: spenders.length });
+  } catch (e) {
+    console.error(e);
     res.status(500).json({ error: e.message });
   }
 });
