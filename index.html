@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALX Agency — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a26;
+  --border: #ffffff0a;
+  --text: #e8e8ed;
+  --text2: #8888a0;
+  --accent: #6cff8a;
+  --accent2: #4ecb6a;
+  --red: #ff6b6b;
+  --orange: #ffb347;
+  --blue: #5b9aff;
+  --purple: #a78bfa;
+  --radius: 14px;
+}
+
+html { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
+body { min-height: 100vh; }
+
+/* ─── LOGIN ─── */
+#login-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 50% 0%, #6cff8a08 0%, transparent 60%), var(--bg);
+}
+.login-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 48px 40px;
+  width: 380px;
+  text-align: center;
+  animation: fadeUp .5s ease;
+}
+.login-box h1 {
+  font-size: 22px; font-weight: 700; margin-bottom: 6px;
+  background: linear-gradient(135deg, var(--accent), var(--blue));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.login-box p { font-size: 13px; color: var(--text2); margin-bottom: 28px; }
+.login-box input {
+  width: 100%; padding: 14px 16px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none; transition: border .2s;
+}
+.login-box input:focus { border-color: var(--accent); }
+.login-box button {
+  width: 100%; margin-top: 16px; padding: 14px;
+  background: var(--accent); color: #0a0a0f; font-weight: 700;
+  font-size: 14px; border: none; border-radius: 10px; cursor: pointer;
+  transition: transform .15s, opacity .15s;
+}
+.login-box button:hover { transform: translateY(-1px); opacity: .9; }
+.login-error { color: var(--red); font-size: 12px; margin-top: 12px; display: none; }
+
+/* ─── DASHBOARD ─── */
+#dashboard { display: none; padding: 32px; max-width: 1200px; margin: 0 auto; }
+.dash-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 32px; flex-wrap: wrap; gap: 16px;
+}
+.dash-header h1 {
+  font-size: 24px; font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--blue));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.controls { display: flex; gap: 10px; align-items: center; }
+.controls select {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 14px; border-radius: 10px;
+  font-size: 13px; font-family: 'DM Sans'; cursor: pointer; outline: none;
+}
+.controls select:focus { border-color: var(--accent); }
+.btn-refresh {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text2); width: 40px; height: 40px; border-radius: 10px;
+  cursor: pointer; font-size: 16px; transition: all .2s; display: grid; place-items: center;
+}
+.btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+.btn-refresh.spinning svg { animation: spin .6s ease; }
+
+/* ─── KPI CARDS ─── */
+.kpi-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px; margin-bottom: 32px;
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px; position: relative; overflow: hidden;
+  animation: fadeUp .4s ease backwards;
+}
+.kpi::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.kpi:nth-child(1)::before { background: linear-gradient(90deg, var(--accent), transparent); }
+.kpi:nth-child(2)::before { background: linear-gradient(90deg, var(--blue), transparent); }
+.kpi:nth-child(3)::before { background: linear-gradient(90deg, var(--purple), transparent); }
+.kpi:nth-child(4)::before { background: linear-gradient(90deg, var(--orange), transparent); }
+.kpi-label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.kpi-value { font-size: 32px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.kpi:nth-child(1) .kpi-value { color: var(--accent); }
+.kpi:nth-child(2) .kpi-value { color: var(--blue); }
+.kpi:nth-child(3) .kpi-value { color: var(--purple); }
+.kpi:nth-child(4) .kpi-value { color: var(--orange); }
+
+/* ─── CHART ─── */
+.chart-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 28px; margin-bottom: 32px;
+  animation: fadeUp .5s ease backwards; animation-delay: .1s;
+}
+.chart-section h2 { font-size: 16px; font-weight: 600; margin-bottom: 24px; }
+.chart-container { position: relative; }
+.bar-group { margin-bottom: 20px; }
+.bar-label {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 13px; margin-bottom: 6px;
+}
+.bar-label span:first-child { font-weight: 500; }
+.bar-label span:last-child { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-size: 13px; }
+.bar-track {
+  width: 100%; height: 28px; background: var(--surface2);
+  border-radius: 6px; overflow: hidden; position: relative;
+}
+.bar-fill {
+  height: 100%; border-radius: 6px;
+  transition: width .8s cubic-bezier(.22,1,.36,1);
+  position: relative;
+}
+.bar-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.08));
+}
+
+/* ─── TABLE ─── */
+.table-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  animation: fadeUp .5s ease backwards; animation-delay: .2s;
+}
+.table-section h2 { font-size: 16px; font-weight: 600; padding: 24px 28px 16px; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  text-align: left; padding: 12px 20px; font-size: 11px;
+  color: var(--text2); text-transform: uppercase; letter-spacing: 1px;
+  border-bottom: 1px solid var(--border); font-weight: 500;
+}
+thead th:not(:first-child) { text-align: right; }
+tbody td {
+  padding: 16px 20px; font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+tbody td:not(:first-child) {
+  text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px;
+}
+tbody tr { transition: background .15s; }
+tbody tr:hover { background: var(--surface2); }
+tbody tr:last-child td { border-bottom: none; }
+.source-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-weight: 500;
+}
+.source-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.conv-pill {
+  display: inline-block; padding: 3px 10px;
+  border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+.conv-good { background: #6cff8a18; color: var(--accent); }
+.conv-mid { background: #ffb34718; color: var(--orange); }
+.conv-low { background: #ff6b6b18; color: var(--red); }
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  text-align: center; padding: 64px 20px; color: var(--text2);
+}
+.empty-state svg { margin-bottom: 16px; opacity: .3; }
+.empty-state p { font-size: 14px; }
+
+/* ─── LOADING ─── */
+.loading-overlay {
+  position: fixed; inset: 0; background: var(--bg);
+  display: grid; place-items: center; z-index: 100;
+  transition: opacity .3s;
+}
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loader {
+  width: 32px; height: 32px; border: 3px solid var(--surface2);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 600px) {
+  #dashboard { padding: 16px; }
+  .kpi-value { font-size: 24px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  table { font-size: 12px; }
+  thead th, tbody td { padding: 10px 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>ALX Agency</h1>
+    <p>Dashboard revenus par source</p>
+    <input type="password" id="pwd" placeholder="Mot de passe" autocomplete="off">
+    <button onclick="login()">Accéder</button>
+    <div class="login-error" id="login-error">Mot de passe incorrect</div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay hidden" id="loading">
+  <div class="loader"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="dash-header">
+    <h1>📊 Revenus par source</h1>
+    <div class="controls">
+      <select id="month-select" onchange="loadData()"></select>
+      <button class="btn-refresh" onclick="refresh()" title="Actualiser">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Revenu total</div>
+      <div class="kpi-value" id="kpi-revenue">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Abonnés</div>
+      <div class="kpi-value" id="kpi-subs">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Spenders</div>
+      <div class="kpi-value" id="kpi-spenders">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Conversion</div>
+      <div class="kpi-value" id="kpi-conv">—</div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-section">
+    <h2>Répartition du revenu</h2>
+    <div class="chart-container" id="chart"></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-section">
+    <h2>Détail par source</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Revenu</th>
+          <th>Subs</th>
+          <th>Spenders</th>
+          <th>LTV</th>
+          <th>Conv.</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const SOURCE_COLORS = {
+  'Instagram': '#E1306C',
+  'TikTok': '#00f2ea',
+  'Twitter': '#1DA1F2',
+  'Threads': '#ffffff',
+  'TikTok Ads': '#ff3b5c',
+  'Insta Ads': '#F77737',
+  'Autre': '#8888a0'
+};
+
+let TOKEN = '';
+
+// ─── LOGIN ──────────────────────────────
+async function login() {
+  const pwd = document.getElementById('pwd').value;
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwd })
+    });
+    const data = await res.json();
+    if (data.success) {
+      TOKEN = data.token;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      await loadMonths();
+      await loadData();
+    } else {
+      showError();
+    }
+  } catch { showError(); }
+}
+
+function showError() {
+  const el = document.getElementById('login-error');
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+document.getElementById('pwd').addEventListener('keydown', e => {
+  if (e.key === 'Enter') login();
+});
+
+// ─── MONTHS ─────────────────────────────
+async function loadMonths() {
+  const res = await fetch('/api/months', { headers: { 'x-auth-token': TOKEN } });
+  const data = await res.json();
+  const sel = document.getElementById('month-select');
+  sel.innerHTML = '<option value="all">Tout</option>';
+  (data.months || []).forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    const [y, mo] = m.split('-');
+    const names = ['','Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+    opt.textContent = `${names[parseInt(mo)]} ${y}`;
+    sel.appendChild(opt);
+  });
+}
+
+// ─── DATA ───────────────────────────────
+async function loadData() {
+  const month = document.getElementById('month-select').value;
+  document.getElementById('loading').classList.remove('hidden');
+  try {
+    const res = await fetch(`/api/data?month=${month}`, { headers: { 'x-auth-token': TOKEN } });
+    const data = await res.json();
+    render(data);
+  } catch (e) {
+    console.error(e);
+  }
+  setTimeout(() => document.getElementById('loading').classList.add('hidden'), 300);
+}
+
+function refresh() {
+  const btn = document.querySelector('.btn-refresh');
+  btn.classList.add('spinning');
+  loadData().then(() => setTimeout(() => btn.classList.remove('spinning'), 600));
+}
+
+// ─── RENDER ─────────────────────────────
+function render(data) {
+  const { sources, totalRevenue, totalSpenders, totalSubs } = data;
+
+  // KPIs
+  document.getElementById('kpi-revenue').textContent = `${parseFloat(totalRevenue).toLocaleString('fr-FR')}€`;
+  document.getElementById('kpi-subs').textContent = totalSubs.toLocaleString('fr-FR');
+  document.getElementById('kpi-spenders').textContent = totalSpenders.toLocaleString('fr-FR');
+  const globalConv = totalSubs > 0 ? ((totalSpenders / totalSubs) * 100).toFixed(1) : '0';
+  document.getElementById('kpi-conv').textContent = `${globalConv}%`;
+
+  // Chart
+  const chart = document.getElementById('chart');
+  if (!sources.length) {
+    chart.innerHTML = `<div class="empty-state"><p>Aucune donnée pour cette période</p></div>`;
+    document.getElementById('table-body').innerHTML = '';
+    return;
+  }
+
+  const maxRev = Math.max(...sources.map(s => parseFloat(s.revenue)), 1);
+  chart.innerHTML = sources
+    .sort((a, b) => parseFloat(b.revenue) - parseFloat(a.revenue))
+    .map(s => {
+      const pct = (parseFloat(s.revenue) / maxRev) * 100;
+      const color = SOURCE_COLORS[s.source] || '#8888a0';
+      return `
+        <div class="bar-group">
+          <div class="bar-label">
+            <span>${s.source}</span>
+            <span>${parseFloat(s.revenue).toLocaleString('fr-FR')}€</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+        </div>`;
+    }).join('');
+
+  // Table
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = sources
+    .sort((a, b) => parseFloat(b.revenue) - parseFloat(a.revenue))
+    .map(s => {
+      const color = SOURCE_COLORS[s.source] || '#8888a0';
+      const conv = parseFloat(s.conversion);
+      let convClass = 'conv-low';
+      if (conv >= 5) convClass = 'conv-good';
+      else if (conv >= 2) convClass = 'conv-mid';
+      return `
+        <tr>
+          <td><span class="source-badge"><span class="source-dot" style="background:${color}"></span>${s.source}</span></td>
+          <td>${parseFloat(s.revenue).toLocaleString('fr-FR')}€</td>
+          <td>${s.subs}</td>
+          <td>${s.spenders}</td>
+          <td>${parseFloat(s.ltv).toLocaleString('fr-FR')}€</td>
+          <td><span class="conv-pill ${convClass}">${s.conversion}%</span></td>
+        </tr>`;
+    }).join('');
+}
+</script>
+</body>
+</html>

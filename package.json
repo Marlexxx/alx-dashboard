@@ -1,0 +1,12 @@
+{
+  "name": "alx-dashboard",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "firebase-admin": "^12.0.0",
+    "googleapis": "^131.0.0"
+  }
+}
